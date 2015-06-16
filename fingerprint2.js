@@ -24,8 +24,6 @@
   "use strict";
   var Fingerprint2 = function(options) {
     var defaultOptions = {
-      swfContainerId: "fingerprintjs2",
-      swfPath: "flash/compiled/FontList.swf"
     };
     this.options = this.extend(options, defaultOptions);
     this.nativeForEach = Array.prototype.forEach;
@@ -187,42 +185,7 @@
       return keys;
     },
     fontsKey: function(keys, done) {
-      if (this.options.excludeJsFonts) {
-        return this.flashFontsKey(keys, done);
-      }
       return this.jsFontsKey(keys, done);
-    },
-    // flash fonts (will increase fingerprinting time 20X to ~ 130-150ms)
-    flashFontsKey: function(keys, done) {
-      if(this.options.excludeFlashFonts) {
-        if(typeof NODEBUG === "undefined"){
-          this.log("Skipping flash fonts detection per excludeFlashFonts configuration option");
-        }
-        return done(keys);
-      }
-      // we do flash if swfobject is loaded
-      if(!this.hasSwfObjectLoaded()){
-        if(typeof NODEBUG === "undefined"){
-          this.log("Swfobject is not detected, Flash fonts enumeration is skipped");
-        }
-        return done(keys);
-      }
-      if(!this.hasMinFlashInstalled()){
-        if(typeof NODEBUG === "undefined"){
-          this.log("Flash is not installed, skipping Flash fonts enumeration");
-        }
-        return done(keys);
-      }
-      if(typeof this.options.swfPath === "undefined"){
-        if(typeof NODEBUG === "undefined"){
-          this.log("To use Flash fonts detection, you must pass a valid swfPath option, skipping Flash fonts enumeration");
-        }
-        return done(keys);
-      }
-      this.loadSwfAndDetectFonts(function(fonts){
-        keys.push(fonts.join(";"));
-        done(keys);
-      });
     },
     // kudos to http://www.lalit.org/lab/javascript-css-font-detect/
     jsFontsKey: function(keys, done) {
@@ -590,28 +553,6 @@
         return true;
       }
       return false;
-    },
-    hasSwfObjectLoaded: function(){
-      return typeof window.swfobject !== "undefined";
-    },
-    hasMinFlashInstalled: function () {
-      return swfobject.hasFlashPlayerVersion("9.0.0");
-    },
-    addFlashDivNode: function() {
-      var node = document.createElement("div");
-      node.setAttribute("id", this.options.swfContainerId);
-      document.body.appendChild(node);
-    },
-    loadSwfAndDetectFonts: function(done) {
-      var hiddenCallback = "___fp_swf_loaded";
-      window[hiddenCallback] = function(fonts) {
-        done(fonts);
-      };
-      var id = this.options.swfContainerId;
-      this.addFlashDivNode();
-      var flashvars = { onReady: hiddenCallback};
-      var flashparams = { allowScriptAccess: "always", menu: "false" };
-      swfobject.embedSWF(this.options.swfPath, id, "1", "1", "9.0.0", false, flashvars, flashparams, {});
     },
     getWebglCanvas: function() {
       var canvas = document.createElement("canvas");
